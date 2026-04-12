@@ -1,0 +1,90 @@
+.layout {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+}
+
+.boardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.interactionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 24px;
+}
+
+.footerCard {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-end;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
+}
+
+.footerKicker {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.footerHeading {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+}
+
+.footerText {
+  margin: 0;
+  color: var(--color-subtle);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.secondaryAction {
+  min-width: 168px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .boardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .interactionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .footerCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .footerCard {
+    padding: 20px;
+    border-radius: 22px;
+  }
+}

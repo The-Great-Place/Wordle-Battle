@@ -1,0 +1,79 @@
+.card {
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.kicker {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1;
+}
+
+.timerPill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 191, 112, 0.14);
+  color: var(--color-accent);
+  font-weight: 800;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.metaBlock {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 840px) {
+  .metaGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 22px;
+    border-radius: 22px;
+  }
+
+  .topRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

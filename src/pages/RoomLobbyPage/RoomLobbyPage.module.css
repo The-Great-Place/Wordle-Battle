@@ -1,0 +1,190 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 24px;
+  width: 100%;
+}
+
+.primaryCard,
+.sideCard {
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
+}
+
+.primaryCard {
+  padding: 32px;
+}
+
+.sideCard {
+  padding: 24px;
+  align-self: start;
+}
+
+.kicker {
+  margin: 0 0 10px;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.description {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--color-subtle);
+  line-height: 1.7;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.metaBlock {
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.metaLabel,
+.slotLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.playerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.actionRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.primaryAction,
+.secondaryAction,
+.tertiaryAction {
+  min-width: 168px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+
+.primaryAction {
+  background: var(--color-accent);
+  color: #16120d;
+}
+
+.secondaryAction {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+}
+
+.tertiaryAction {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+}
+
+.tertiaryAction:disabled {
+  opacity: 0.55;
+}
+
+.preMatchPanel {
+  margin-top: 28px;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.panelCopy {
+  max-width: 40rem;
+}
+
+.panelKicker {
+  margin: 0 0 8px;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.panelHeading {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+}
+
+.panelDescription {
+  margin: 0;
+  color: var(--color-subtle);
+  line-height: 1.6;
+}
+
+.sideHeading {
+  margin: 0 0 14px;
+  font-size: 1.25rem;
+}
+
+.checklist {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-subtle);
+  line-height: 1.7;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .primaryCard,
+  .sideCard {
+    border-radius: 22px;
+  }
+
+  .primaryCard,
+  .sideCard {
+    padding: 24px;
+  }
+
+  .preMatchPanel {
+    border-radius: 22px;
+    padding: 20px;
+  }
+
+  .metaRow,
+  .playerGrid {
+    grid-template-columns: 1fr;
+  }
+}

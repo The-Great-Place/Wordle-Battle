@@ -1,0 +1,46 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter,
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  background-color: #0c1017;
+  color: #f4efe5;
+
+  --color-text: #f4efe5;
+  --color-subtle: #cdc5b6;
+  --color-muted: #f2b66d;
+  --color-accent: #ffbf70;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-surface: rgba(15, 18, 24, 0.78);
+  --shadow-card: 0 24px 60px rgba(0, 0, 0, 0.32);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
