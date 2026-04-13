@@ -6,6 +6,7 @@ export function LandingPage() {
     displayName,
     joinCode,
     errors,
+    isSubmitting,
     handleCreateRoom,
     handleJoinRoom,
     handleNameChange,
@@ -41,8 +42,13 @@ export function LandingPage() {
           </label>
 
           <div className={styles.actions}>
-            <button className={styles.primaryAction} type="button" onClick={handleCreateRoom}>
-              Create Room
+            <button
+              className={styles.primaryAction}
+              type="button"
+              onClick={handleCreateRoom}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Working...' : 'Create Room'}
             </button>
           </div>
 
@@ -61,8 +67,8 @@ export function LandingPage() {
               </span>
             </label>
 
-            <button className={styles.secondaryAction} type="submit">
-              Join With Code
+            <button className={styles.secondaryAction} type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Working...' : 'Join With Code'}
             </button>
           </form>
         </div>

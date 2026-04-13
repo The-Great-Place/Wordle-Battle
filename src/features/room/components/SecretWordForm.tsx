@@ -4,6 +4,7 @@ type SecretWordFormProps = {
   secretWord: string;
   error?: string;
   isLocked: boolean;
+  isSaving?: boolean;
   onChange: (value: string) => void;
   onLock: () => void;
 };
@@ -12,6 +13,7 @@ export function SecretWordForm({
   secretWord,
   error,
   isLocked,
+  isSaving = false,
   onChange,
   onLock,
 }: SecretWordFormProps) {
@@ -21,8 +23,8 @@ export function SecretWordForm({
         <p className={styles.kicker}>Secret Word</p>
         <h3 className={styles.heading}>Lock in the word your opponent has to solve.</h3>
         <p className={styles.description}>
-          This is still mock state, but it models the exact step we&apos;ll later
-          secure behind server-side validation.
+          This now submits through Supabase-backed state, while full
+          server-authoritative validation is still the next step.
         </p>
       </div>
 
@@ -32,16 +34,16 @@ export function SecretWordForm({
           type="text"
           value={secretWord}
           onChange={(event) => onChange(event.target.value)}
-          disabled={isLocked}
+          disabled={isLocked || isSaving}
           placeholder="CRANE"
         />
-        <button className={styles.action} type="button" onClick={onLock} disabled={isLocked}>
-          {isLocked ? 'Locked In' : 'Lock Secret Word'}
+        <button className={styles.action} type="button" onClick={onLock} disabled={isLocked || isSaving}>
+          {isLocked ? 'Locked In' : isSaving ? 'Saving...' : 'Lock Secret Word'}
         </button>
       </div>
 
       <p className={styles.helpText}>
-        {error ?? (isLocked ? 'Your secret word is locked for this mock round.' : 'Five letters only for now.')}
+        {error ?? (isLocked ? 'Your secret word is locked for this round.' : 'Five letters only for now.')}
       </p>
     </section>
   );

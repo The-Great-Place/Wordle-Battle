@@ -4,6 +4,7 @@ type GuessComposerProps = {
   currentGuess: string;
   statusMessage: string;
   canSubmit: boolean;
+  isDisabled?: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
 };
@@ -12,6 +13,7 @@ export function GuessComposer({
   currentGuess,
   statusMessage,
   canSubmit,
+  isDisabled = false,
   onChange,
   onSubmit,
 }: GuessComposerProps) {
@@ -28,6 +30,7 @@ export function GuessComposer({
           type="text"
           placeholder="Enter 5 letters"
           value={currentGuess}
+          disabled={isDisabled}
           onChange={(event) => onChange(event.target.value)}
         />
         <button className={styles.action} type="button" onClick={onSubmit} disabled={!canSubmit}>

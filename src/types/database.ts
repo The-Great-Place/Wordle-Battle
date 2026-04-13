@@ -9,6 +9,95 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      guesses: {
+        Row: {
+          created_at: string;
+          guess_index: number;
+          guess_word: string;
+          id: string;
+          match_id: string;
+          player_id: string;
+          result_pattern: string;
+        };
+        Insert: {
+          created_at?: string;
+          guess_index: number;
+          guess_word: string;
+          id?: string;
+          match_id: string;
+          player_id: string;
+          result_pattern: string;
+        };
+        Update: {
+          created_at?: string;
+          guess_index?: number;
+          guess_word?: string;
+          id?: string;
+          match_id?: string;
+          player_id?: string;
+          result_pattern?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'guesses_match_id_fkey';
+            columns: ['match_id'];
+            referencedRelation: 'matches';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'guesses_player_id_fkey';
+            columns: ['player_id'];
+            referencedRelation: 'players';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      match_players: {
+        Row: {
+          created_at: string;
+          id: string;
+          last_guess_at: string | null;
+          match_id: string;
+          player_id: string;
+          solved_at: string | null;
+          timed_out_at: string | null;
+          turn_deadline_at: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          last_guess_at?: string | null;
+          match_id: string;
+          player_id: string;
+          solved_at?: string | null;
+          timed_out_at?: string | null;
+          turn_deadline_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          last_guess_at?: string | null;
+          match_id?: string;
+          player_id?: string;
+          solved_at?: string | null;
+          timed_out_at?: string | null;
+          turn_deadline_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'match_players_match_id_fkey';
+            columns: ['match_id'];
+            referencedRelation: 'matches';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'match_players_player_id_fkey';
+            columns: ['player_id'];
+            referencedRelation: 'players';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       matches: {
         Row: {
           created_at: string;
@@ -206,7 +295,35 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      submit_match_guess: {
+        Args: {
+          p_guess_word: string;
+          p_match_id: string;
+          p_player_id: string;
+        };
+        Returns: {
+          created_at: string;
+          finished_at: string | null;
+          guess_id: string;
+          guess_index: number;
+          match_status: 'awaiting_words' | 'active' | 'finished';
+          result_pattern: string;
+          winner_player_id: string | null;
+        }[];
+      };
+      sync_match_timeouts: {
+        Args: {
+          p_match_id: string;
+        };
+        Returns: {
+          finished_at: string | null;
+          match_status: 'awaiting_words' | 'active' | 'finished';
+          timed_out_player_id: string | null;
+          winner_player_id: string | null;
+        }[];
+      };
+    };
     Enums: {
       match_status: 'awaiting_words' | 'active' | 'finished';
       room_seat: 'A' | 'B';

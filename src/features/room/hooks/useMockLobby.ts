@@ -1,31 +1,44 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { readMockRoomSession } from '../mockSession';
-import { MockLobbyState } from '../types';
+import { MockLobbyState, RoomMemberRecord } from '../types';
+import {
+  ensurePendingMatchForRoom,
+  submitSecretWord,
+  syncRoomMatchLifecycle,
+  updateRoomMemberState,
+  updateRoomStatus,
+} from '../roomService';
 import { normalizeRoomCode } from '../utils';
 
 type SecretWordErrors = {
   secretWord?: string;
 };
 
-export function useMockLobby(roomCode: string) {
+export function useMockLobby(input: {
+  roomId: string | null;
+  roomCode: string;
+  currentPlayerId: string | null;
+  currentPlayerName: string;
+  members: RoomMemberRecord[];
+}) {
+  const { roomId, roomCode, currentPlayerId, currentPlayerName, members } = input;
   const normalizedCode = normalizeRoomCode(roomCode);
-  const session = useMemo(readMockRoomSession, []);
-  const [isReady, setIsReady] = useState(false);
+  // const [isReady, setIsReady] = useState(false);
   const [secretWord, setSecretWord] = useState('');
-  const [isWordLocked, setIsWordLocked] = useState(false);
   const [errors, setErrors] = useState<SecretWordErrors>({});
+  const [isSaving, setIsSaving] = useState(false);
 
-  const playerName =
-    session && normalizeRoomCode(session.roomCode) === normalizedCode
-      ? session.playerName
-      : 'Guest Player';
-
-  const hasOpponent = session?.joinedVia === 'join';
-  const opponentName = hasOpponent ? 'Host Player' : 'Waiting for opponent';
-  const opponentConnected = hasOpponent;
-  const opponentReady = hasOpponent;
-  const opponentWordLocked = hasOpponent && isReady;
+  const you = members.find((member) => member.player.id === currentPlayerId) ?? null;
+  const opponent = members.find((member) => member.player.id !== currentPlayerId) ?? null;
+  const hasOpponent = Boolean(opponent);
+  const opponentName = opponent?.player.display_name ?? 'Waiting for opponent';
+  const opponentConnected = Boolean(opponent);
+  const opponentReady = opponent?.ready_state ?? false;
+  const opponentWordLocked = opponent?.word_locked ?? false;
+  const playerName = you?.player.display_name ?? currentPlayerName;
+  const yourSeat = you?.seat ?? 'A';
+  const isReady = you?.ready_state ?? false;
+  const isWordLocked = you?.word_locked ?? false;
 
   const phase = getLobbyPhase({
     isReady,
@@ -40,18 +53,18 @@ export function useMockLobby(roomCode: string) {
     phase,
     players: {
       playerOne: {
-        name: hasOpponent ? opponentName : playerName,
-        connected: true,
-        ready: hasOpponent ? opponentReady : isReady,
-        wordLocked: hasOpponent ? opponentWordLocked : isWordLocked,
-        isYou: !hasOpponent,
+        name: yourSeat === 'A' ? playerName : opponentName,
+        connected: yourSeat === 'A' ? true : opponentConnected,
+        ready: yourSeat === 'A' ? isReady : opponentReady,
+        wordLocked: yourSeat === 'A' ? isWordLocked : opponentWordLocked,
+        isYou: yourSeat === 'A',
       },
       playerTwo: {
-        name: hasOpponent ? playerName : opponentName,
-        connected: hasOpponent,
-        ready: hasOpponent ? isReady : false,
-        wordLocked: hasOpponent ? isWordLocked : false,
-        isYou: hasOpponent,
+        name: yourSeat === 'A' ? opponentName : playerName,
+        connected: yourSeat === 'A' ? opponentConnected : true,
+        ready: yourSeat === 'A' ? opponentReady : isReady,
+        wordLocked: yourSeat === 'A' ? opponentWordLocked : isWordLocked,
+        isYou: yourSeat === 'B',
       },
     },
   };
@@ -62,18 +75,46 @@ export function useMockLobby(roomCode: string) {
     }
   }, [errors.secretWord, phase]);
 
-  function toggleReady() {
-    setIsReady((current) => {
-      const next = !current;
+  useEffect(() => {
+    if (!roomId) {
+      return;
+    }
 
-      if (!next) {
-        setIsWordLocked(false);
+    if (members.length < 2) {
+      void updateRoomStatus(roomId, 'waiting_for_players');
+      return;
+    }
+
+    void updateRoomStatus(roomId, 'waiting_for_words');
+  }, [members.length, roomId]);
+
+  async function toggleReady() {
+    if (!you) {
+      setErrors({ secretWord: 'Your player session is missing from this room.' });
+      return;
+    }
+
+    const nextReady = !isReady;
+
+    try {
+      setIsSaving(true);
+      await updateRoomMemberState({
+        roomPlayerId: you.id,
+        readyState: nextReady,
+        wordLocked: nextReady ? false : false,
+      });
+
+      if (!nextReady) {
         setSecretWord('');
         setErrors({});
       }
-
-      return next;
-    });
+    } catch (error) {
+      setErrors({
+        secretWord: error instanceof Error ? error.message : 'Could not update ready state.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function handleSecretWordChange(value: string) {
@@ -82,7 +123,12 @@ export function useMockLobby(roomCode: string) {
     setErrors((current) => ({ ...current, secretWord: undefined }));
   }
 
-  function lockSecretWord() {
+  async function lockSecretWord() {
+    if (!you || !roomId) {
+      setErrors({ secretWord: 'Your player session is missing from this room.' });
+      return;
+    }
+
     const validationError = validateSecretWord(secretWord);
 
     if (validationError) {
@@ -90,13 +136,34 @@ export function useMockLobby(roomCode: string) {
       return;
     }
 
-    setIsWordLocked(true);
+    try {
+      setIsSaving(true);
+      const match = await ensurePendingMatchForRoom(roomId);
+      await submitSecretWord({
+        matchId: match.id,
+        playerId: you.player.id,
+        word: secretWord,
+      });
+      await updateRoomMemberState({
+        roomPlayerId: you.id,
+        readyState: true,
+        wordLocked: true,
+      });
+      await syncRoomMatchLifecycle(roomId);
+    } catch (error) {
+      setErrors({
+        secretWord: error instanceof Error ? error.message : 'Could not lock secret word.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return {
     lobbyState,
     playerName,
     errors,
+    isSaving,
     toggleReady,
     handleSecretWordChange,
     lockSecretWord,

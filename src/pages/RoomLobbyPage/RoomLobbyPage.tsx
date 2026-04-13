@@ -1,49 +1,68 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
 
-import { persistMockMatchSession } from '../../features/game/mockMatchSession';
 import { PlayerSlot } from '../../features/room/components/PlayerSlot';
 import { SecretWordForm } from '../../features/room/components/SecretWordForm';
 import { useMockLobby } from '../../features/room/hooks/useMockLobby';
+import { useRoomPresence } from '../../features/room/hooks/useRoomPresence';
 import styles from './RoomLobbyPage.module.css';
 
 export function RoomLobbyPage() {
   const navigate = useNavigate();
   const { roomCode = '' } = useParams();
-  const { lobbyState, playerName, errors, toggleReady, handleSecretWordChange, lockSecretWord } =
-    useMockLobby(roomCode);
+  const { room, match, members, currentPlayerId, currentPlayerName, isLoading, error } = useRoomPresence(roomCode);
+  const { lobbyState, playerName, errors, isSaving, toggleReady, handleSecretWordChange, lockSecretWord } =
+    useMockLobby({
+      roomId: room?.id ?? null,
+      roomCode,
+      currentPlayerId,
+      currentPlayerName,
+      members,
+    });
   const { playerOne, playerTwo } = lobbyState.players;
 
-  function handleStartMatch() {
-    const you = playerOne.isYou ? playerOne : playerTwo;
-    const opponent = playerOne.isYou ? playerTwo : playerOne;
+  useEffect(() => {
+    if (room?.status === 'in_match' && match?.status === 'active') {
+      navigate(`/match/${room.code}`);
+    }
+  }, [match?.status, navigate, room?.code, room?.status]);
 
-    persistMockMatchSession({
-      roomCode: lobbyState.roomCode,
-      yourName: you.name,
-      opponentName: opponent.name,
-      yourSecretWord: lobbyState.secretWord,
-      opponentSecretWord: 'GHOST',
-      yourBoard: [
-        { word: 'SLATE', result: ['absent', 'present', 'absent', 'correct', 'absent'] },
-        { word: 'CRANE', result: ['present', 'correct', 'absent', 'absent', 'absent'] },
-      ],
-      opponentBoard: [
-        { word: 'BOUND', result: ['absent', 'absent', 'present', 'absent', 'absent'] },
-        { word: 'TRAIL', result: ['present', 'absent', 'absent', 'correct', 'absent'] },
-      ],
-    });
+  if (isLoading) {
+    return (
+      <section className={styles.layout}>
+        <div className={styles.primaryCard}>
+          <p className={styles.kicker}>Room Loading</p>
+          <h2 className={styles.heading}>Fetching room state...</h2>
+        </div>
+      </section>
+    );
+  }
 
-    navigate(`/match/${lobbyState.roomCode}`);
+  if (error || !room) {
+    return (
+      <section className={styles.layout}>
+        <div className={styles.primaryCard}>
+          <p className={styles.kicker}>Room Error</p>
+          <h2 className={styles.heading}>Could not load room</h2>
+          <p className={styles.description}>{error ?? 'This room is unavailable right now.'}</p>
+          <div className={styles.actionRow}>
+            <Link className={styles.secondaryAction} to="/">
+              Back to Landing
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
     <section className={styles.layout}>
       <div className={styles.primaryCard}>
-        <p className={styles.kicker}>Mock Lobby</p>
+        <p className={styles.kicker}>Live Lobby</p>
         <h2 className={styles.heading}>Room {lobbyState.roomCode}</h2>
         <p className={styles.description}>
-          This mock lobby now includes the pre-match loop: players connect,
-          ready up, and lock in a secret word before the duel starts.
+          This lobby now reads real room membership from Supabase and keeps
+          pre-match readiness and match handoff in sync across tabs.
         </p>
 
         <div className={styles.metaRow}>
@@ -75,16 +94,23 @@ export function RoomLobbyPage() {
             <p className={styles.panelKicker}>Pre-Match Flow</p>
             <h3 className={styles.panelHeading}>Ready up before secret-word entry unlocks.</h3>
             <p className={styles.panelDescription}>
-              In the real build, this state will be shared live between both
-              players. For now, join-mode simulates a connected opponent so we
-              can shape the full lobby sequence.
+              Ready state, word-lock state, and match creation now persist through
+              Supabase. Secret word contents are submitted to the backend, while
+              gameplay itself is still the next remaining mock boundary.
             </p>
           </div>
 
           <div className={styles.actionRow}>
-            <button className={styles.primaryAction} type="button" onClick={toggleReady}>
+            <button
+              className={styles.primaryAction}
+              type="button"
+              onClick={() => void toggleReady()}
+              disabled={isSaving}
+            >
               {playerOne.isYou || playerTwo.isYou
-                ? getReadyButtonLabel(lobbyState.phase, playerOne.isYou ? playerOne.ready : playerTwo.ready)
+                ? isSaving
+                  ? 'Saving...'
+                  : getReadyButtonLabel(lobbyState.phase, playerOne.isYou ? playerOne.ready : playerTwo.ready)
                 : 'Toggle Ready'}
             </button>
             <Link className={styles.secondaryAction} to="/">
@@ -98,30 +124,28 @@ export function RoomLobbyPage() {
             secretWord={lobbyState.secretWord}
             error={errors.secretWord}
             isLocked={playerOne.isYou ? playerOne.wordLocked : playerTwo.wordLocked}
+            isSaving={isSaving}
             onChange={handleSecretWordChange}
-            onLock={lockSecretWord}
+            onLock={() => void lockSecretWord()}
           />
         ) : null}
 
-        <div className={styles.actionRow}>
-          <button
-            className={styles.tertiaryAction}
-            type="button"
-            disabled={lobbyState.phase !== 'locked_in'}
-            onClick={handleStartMatch}
-          >
-            Mock Start Match
-          </button>
-        </div>
+        {room.status === 'in_match' ? (
+          <div className={styles.actionRow}>
+            <button className={styles.tertiaryAction} type="button" onClick={() => navigate(`/match/${room.code}`)}>
+              Enter Match
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className={styles.sideCard}>
         <h3 className={styles.sideHeading}>What this proves</h3>
         <ul className={styles.checklist}>
-          <li>The lobby has a real pre-match sequence now</li>
-          <li>Ready state gates secret-word entry</li>
-          <li>Secret-word entry has local validation and lock-in</li>
-          <li>The mock flow now mirrors the future Supabase room lifecycle</li>
+          <li>Room membership is live from Supabase</li>
+          <li>Ready state persists across tabs</li>
+          <li>Word lock state persists across tabs</li>
+          <li>Match rows now begin in Supabase before the match screen opens</li>
         </ul>
       </div>
     </section>

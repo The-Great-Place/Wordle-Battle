@@ -1,8 +1,8 @@
-import { MockRoomSession } from './types';
+import { RoomSession } from './types';
 
-const STORAGE_KEY = 'wordle-battle.mock-session';
+const STORAGE_KEY = 'wordle-battle.room-session';
 
-export function readMockRoomSession(): MockRoomSession | null {
+export function readRoomSession(): RoomSession | null {
   const raw = window.localStorage.getItem(STORAGE_KEY);
 
   if (!raw) {
@@ -10,12 +10,12 @@ export function readMockRoomSession(): MockRoomSession | null {
   }
 
   try {
-    return JSON.parse(raw) as MockRoomSession;
+    return JSON.parse(raw) as RoomSession;
   } catch {
     return null;
   }
 }
 
-export function persistMockRoomSession(session: MockRoomSession) {
+export function persistRoomSession(session: RoomSession) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }

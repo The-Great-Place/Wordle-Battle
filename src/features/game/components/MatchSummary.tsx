@@ -6,6 +6,7 @@ type MatchSummaryProps = {
   opponentName: string;
   timerSeconds: number;
   maskedWord: string;
+  statusLabel?: string;
 };
 
 export function MatchSummary({
@@ -14,12 +15,13 @@ export function MatchSummary({
   opponentName,
   timerSeconds,
   maskedWord,
+  statusLabel = 'Live Match',
 }: MatchSummaryProps) {
   return (
     <section className={styles.card}>
       <div className={styles.topRow}>
         <div>
-          <p className={styles.kicker}>Mock Match</p>
+          <p className={styles.kicker}>{statusLabel}</p>
           <h2 className={styles.heading}>Room {roomCode}</h2>
         </div>
         <div className={styles.timerPill}>00:{timerSeconds.toString().padStart(2, '0')}</div>
@@ -35,7 +37,7 @@ export function MatchSummary({
           <strong>{opponentName}</strong>
         </div>
         <div className={styles.metaBlock}>
-          <span className={styles.label}>Hidden Word</span>
+          <span className={styles.label}>Turn Timers</span>
           <strong>{maskedWord}</strong>
         </div>
       </div>

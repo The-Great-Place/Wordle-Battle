@@ -118,6 +118,12 @@
   opacity: 0.55;
 }
 
+.primaryAction:disabled,
+.secondaryAction:disabled,
+.tertiaryAction:disabled {
+  cursor: default;
+}
+
 .preMatchPanel {
   margin-top: 28px;
   padding: 24px;

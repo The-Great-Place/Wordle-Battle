@@ -138,6 +138,13 @@
   transform: translateY(-1px);
 }
 
+.primaryAction:disabled,
+.secondaryAction:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+}
+
 .previewCard {
   padding: 24px;
   display: flex;

@@ -1,12 +1,11 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { persistMockRoomSession } from '../mockSession';
+import { persistRoomSession } from '../mockSession';
+import { createRoomSession, joinRoomSession } from '../roomService';
 import { RoomFormErrors } from '../types';
 import {
-  createMockRoomCode,
   normalizeDisplayName,
-  normalizeRoomCode,
   sanitizeRoomCodeInput,
   validateDisplayName,
   validateRoomCode,
@@ -17,10 +16,11 @@ export function useRoomEntryForm() {
   const [displayName, setDisplayName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [errors, setErrors] = useState<RoomFormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const normalizedName = useMemo(() => normalizeDisplayName(displayName), [displayName]);
 
-  function handleCreateRoom() {
+  async function handleCreateRoom() {
     const nameError = validateDisplayName(normalizedName);
 
     if (nameError) {
@@ -28,16 +28,21 @@ export function useRoomEntryForm() {
       return;
     }
 
-    const roomCode = createMockRoomCode();
-    persistMockRoomSession({
-      roomCode,
-      playerName: normalizedName,
-      joinedVia: 'create',
-    });
-    navigate(`/room/${roomCode}`);
+    try {
+      setIsSubmitting(true);
+      const session = await createRoomSession(normalizedName);
+      persistRoomSession(session);
+      navigate(`/room/${session.roomCode}`);
+    } catch (error) {
+      setErrors({
+        displayName: error instanceof Error ? error.message : 'Could not create room.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleJoinRoom(event: FormEvent<HTMLFormElement>) {
+  async function handleJoinRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nameError = validateDisplayName(normalizedName);
@@ -51,13 +56,18 @@ export function useRoomEntryForm() {
       return;
     }
 
-    const normalizedCode = normalizeRoomCode(joinCode);
-    persistMockRoomSession({
-      roomCode: normalizedCode,
-      playerName: normalizedName,
-      joinedVia: 'join',
-    });
-    navigate(`/room/${normalizedCode}`);
+    try {
+      setIsSubmitting(true);
+      const session = await joinRoomSession(normalizedName, joinCode);
+      persistRoomSession(session);
+      navigate(`/room/${session.roomCode}`);
+    } catch (error) {
+      setErrors({
+        joinCode: error instanceof Error ? error.message : 'Could not join room.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleNameChange(value: string) {
@@ -74,6 +84,7 @@ export function useRoomEntryForm() {
     displayName,
     joinCode,
     errors,
+    isSubmitting,
     handleCreateRoom,
     handleJoinRoom,
     handleNameChange,
