@@ -7,7 +7,15 @@
       content="width=device-width, initial-scale=1.0"
     />
     <title>Wordle Battle</title>
-    <script type="module" crossorigin src="/Wordle-Battle/assets/index-CZbsjoQC.js"></script>
+    <script>
+      const redirectPath = sessionStorage.getItem('spa-redirect-path');
+
+      if (redirectPath) {
+        sessionStorage.removeItem('spa-redirect-path');
+        window.history.replaceState(null, '', redirectPath);
+      }
+    </script>
+    <script type="module" crossorigin src="/Wordle-Battle/assets/index-C8kBbuNe.js"></script>
     <link rel="stylesheet" crossorigin href="/Wordle-Battle/assets/index-EUDN86TM.css">
   </head>
   <body>
