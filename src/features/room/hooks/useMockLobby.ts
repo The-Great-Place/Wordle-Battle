@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 
-import { MockLobbyState, RoomMemberRecord } from '../types';
+import { MatchRecord, MockLobbyState, RoomMemberRecord, RoomRecord } from '../types';
 import {
   ensurePendingMatchForRoom,
+  restartMatch,
   submitSecretWord,
-  syncRoomMatchLifecycle,
   updateRoomMemberState,
-  updateRoomStatus,
 } from '../roomService';
 import { normalizeRoomCode } from '../utils';
 
@@ -17,13 +16,14 @@ type SecretWordErrors = {
 export function useMockLobby(input: {
   roomId: string | null;
   roomCode: string;
+  roomStatus?: RoomRecord['status'];
+  match?: MatchRecord | null;
   currentPlayerId: string | null;
   currentPlayerName: string;
   members: RoomMemberRecord[];
 }) {
-  const { roomId, roomCode, currentPlayerId, currentPlayerName, members } = input;
+  const { roomId, roomCode, roomStatus, match, currentPlayerId, currentPlayerName, members } = input;
   const normalizedCode = normalizeRoomCode(roomCode);
-  // const [isReady, setIsReady] = useState(false);
   const [secretWord, setSecretWord] = useState('');
   const [errors, setErrors] = useState<SecretWordErrors>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -39,12 +39,14 @@ export function useMockLobby(input: {
   const yourSeat = you?.seat ?? 'A';
   const isReady = you?.ready_state ?? false;
   const isWordLocked = you?.word_locked ?? false;
+  const isMatchFinished = match?.status === 'finished' || roomStatus === 'match_finished';
 
   const phase = getLobbyPhase({
     isReady,
     hasOpponent,
     isWordLocked,
     opponentWordLocked,
+    isMatchFinished,
   });
 
   const lobbyState: MockLobbyState = {
@@ -76,17 +78,12 @@ export function useMockLobby(input: {
   }, [errors.secretWord, phase]);
 
   useEffect(() => {
-    if (!roomId) {
+    if (!isWordLocked) {
       return;
     }
 
-    if (members.length < 2) {
-      void updateRoomStatus(roomId, 'waiting_for_players');
-      return;
-    }
-
-    void updateRoomStatus(roomId, 'waiting_for_words');
-  }, [members.length, roomId]);
+    setSecretWord('');
+  }, [isWordLocked]);
 
   async function toggleReady() {
     if (!you) {
@@ -144,15 +141,33 @@ export function useMockLobby(input: {
         playerId: you.player.id,
         word: secretWord,
       });
-      await updateRoomMemberState({
-        roomPlayerId: you.id,
-        readyState: true,
-        wordLocked: true,
-      });
-      await syncRoomMatchLifecycle(roomId);
+      setSecretWord('');
     } catch (error) {
       setErrors({
         secretWord: error instanceof Error ? error.message : 'Could not lock secret word.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function startNextRound() {
+    if (!roomId || !currentPlayerId) {
+      setErrors({ secretWord: 'Your player session is missing from this room.' });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setErrors({});
+      setSecretWord('');
+      await restartMatch({
+        roomId,
+        playerId: currentPlayerId,
+      });
+    } catch (error) {
+      setErrors({
+        secretWord: error instanceof Error ? error.message : 'Could not start the next round.',
       });
     } finally {
       setIsSaving(false);
@@ -164,9 +179,11 @@ export function useMockLobby(input: {
     playerName,
     errors,
     isSaving,
+    isMatchFinished,
     toggleReady,
     handleSecretWordChange,
     lockSecretWord,
+    startNextRound,
   };
 }
 
@@ -187,12 +204,18 @@ function getLobbyPhase({
   hasOpponent,
   isWordLocked,
   opponentWordLocked,
+  isMatchFinished,
 }: {
   isReady: boolean;
   hasOpponent: boolean;
   isWordLocked: boolean;
   opponentWordLocked: boolean;
+  isMatchFinished: boolean;
 }) {
+  if (isMatchFinished) {
+    return 'ready_check';
+  }
+
   if (!hasOpponent) {
     return 'waiting';
   }

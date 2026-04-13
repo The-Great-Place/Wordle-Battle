@@ -11,10 +11,22 @@ export function RoomLobbyPage() {
   const navigate = useNavigate();
   const { roomCode = '' } = useParams();
   const { room, match, members, currentPlayerId, currentPlayerName, isLoading, error } = useRoomPresence(roomCode);
-  const { lobbyState, playerName, errors, isSaving, toggleReady, handleSecretWordChange, lockSecretWord } =
+  const {
+    lobbyState,
+    playerName,
+    errors,
+    isSaving,
+    isMatchFinished,
+    toggleReady,
+    handleSecretWordChange,
+    lockSecretWord,
+    startNextRound,
+  } =
     useMockLobby({
       roomId: room?.id ?? null,
       roomCode,
+      roomStatus: room?.status,
+      match,
       currentPlayerId,
       currentPlayerName,
       members,
@@ -61,8 +73,9 @@ export function RoomLobbyPage() {
         <p className={styles.kicker}>Live Lobby</p>
         <h2 className={styles.heading}>Room {lobbyState.roomCode}</h2>
         <p className={styles.description}>
-          This lobby now reads real room membership from Supabase and keeps
-          pre-match readiness and match handoff in sync across tabs.
+          This lobby keeps the same room and players together across rounds, so
+          you can finish a battle, reset the round, and pick fresh dictionary
+          words without leaving the room.
         </p>
 
         <div className={styles.metaRow}>
@@ -72,7 +85,7 @@ export function RoomLobbyPage() {
           </div>
           <div className={styles.metaBlock}>
             <span className={styles.metaLabel}>Status</span>
-            <strong>{getPhaseLabel(lobbyState.phase)}</strong>
+            <strong>{getPhaseLabel(lobbyState.phase, isMatchFinished)}</strong>
           </div>
         </div>
 
@@ -91,35 +104,50 @@ export function RoomLobbyPage() {
 
         <div className={styles.preMatchPanel}>
           <div className={styles.panelCopy}>
-            <p className={styles.panelKicker}>Pre-Match Flow</p>
-            <h3 className={styles.panelHeading}>Ready up before secret-word entry unlocks.</h3>
+            <p className={styles.panelKicker}>{isMatchFinished ? 'Round Complete' : 'Pre-Match Flow'}</p>
+            <h3 className={styles.panelHeading}>
+              {isMatchFinished
+                ? 'Reset the room for another round with the same opponent.'
+                : 'Ready up before secret-word entry unlocks.'}
+            </h3>
             <p className={styles.panelDescription}>
-              Ready state, word-lock state, and match creation now persist through
-              Supabase. Secret word contents are submitted to the backend, while
-              gameplay itself is still the next remaining mock boundary.
+              {isMatchFinished
+                ? 'Starting the next round creates a fresh match, clears both ready states, and unlocks secret-word selection again.'
+                : 'Ready state, word-lock state, and secret-word validation now flow through Supabase-backed round state.'}
             </p>
           </div>
 
           <div className={styles.actionRow}>
-            <button
-              className={styles.primaryAction}
-              type="button"
-              onClick={() => void toggleReady()}
-              disabled={isSaving}
-            >
-              {playerOne.isYou || playerTwo.isYou
-                ? isSaving
-                  ? 'Saving...'
-                  : getReadyButtonLabel(lobbyState.phase, playerOne.isYou ? playerOne.ready : playerTwo.ready)
-                : 'Toggle Ready'}
-            </button>
+            {isMatchFinished ? (
+              <button
+                className={styles.primaryAction}
+                type="button"
+                onClick={() => void startNextRound()}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Resetting...' : 'Start Next Round'}
+              </button>
+            ) : (
+              <button
+                className={styles.primaryAction}
+                type="button"
+                onClick={() => void toggleReady()}
+                disabled={isSaving}
+              >
+                {playerOne.isYou || playerTwo.isYou
+                  ? isSaving
+                    ? 'Saving...'
+                    : getReadyButtonLabel(lobbyState.phase, playerOne.isYou ? playerOne.ready : playerTwo.ready)
+                  : 'Toggle Ready'}
+              </button>
+            )}
             <Link className={styles.secondaryAction} to="/">
               Back to Landing
             </Link>
           </div>
         </div>
 
-        {lobbyState.phase === 'word_entry' || lobbyState.phase === 'locked_in' ? (
+        {!isMatchFinished && (lobbyState.phase === 'word_entry' || lobbyState.phase === 'locked_in') ? (
           <SecretWordForm
             secretWord={lobbyState.secretWord}
             error={errors.secretWord}
@@ -144,8 +172,9 @@ export function RoomLobbyPage() {
         <ul className={styles.checklist}>
           <li>Room membership is live from Supabase</li>
           <li>Ready state persists across tabs</li>
-          <li>Word lock state persists across tabs</li>
-          <li>Match rows now begin in Supabase before the match screen opens</li>
+          <li>Secret words are checked against the shared dictionary</li>
+          <li>Word locks reset cleanly between rounds</li>
+          <li>Replay uses a fresh match row without creating a new room</li>
         </ul>
       </div>
     </section>
@@ -172,7 +201,11 @@ function getPlayerStatus(player: {
   return 'Connected';
 }
 
-function getPhaseLabel(phase: 'waiting' | 'ready_check' | 'word_entry' | 'locked_in') {
+function getPhaseLabel(phase: 'waiting' | 'ready_check' | 'word_entry' | 'locked_in', isMatchFinished: boolean) {
+  if (isMatchFinished) {
+    return 'Round complete';
+  }
+
   switch (phase) {
     case 'waiting':
       return 'Waiting for a second player';

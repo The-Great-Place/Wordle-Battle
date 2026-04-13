@@ -8,7 +8,6 @@ type RoomInsert = Database['public']['Tables']['rooms']['Insert'];
 type RoomPlayerInsert = Database['public']['Tables']['room_players']['Insert'];
 type MatchInsert = Database['public']['Tables']['matches']['Insert'];
 type MatchUpdate = Database['public']['Tables']['matches']['Update'];
-type SecretWordInsert = Database['public']['Tables']['secret_words']['Insert'];
 type RoomUpdate = Database['public']['Tables']['rooms']['Update'];
 
 export async function createRoomSession(displayName: string): Promise<RoomSession> {
@@ -48,6 +47,7 @@ export async function joinRoomSession(displayName: string, roomCode: string): Pr
     playerId: player.id,
     seat: roomMembers.some((member) => member.seat === 'A') ? 'B' : 'A',
   });
+  await updateRoomStatus(room.id, 'waiting_for_words');
 
   return {
     playerId: player.id,
@@ -177,18 +177,33 @@ export async function submitSecretWord(input: {
   playerId: string;
   word: string;
 }) {
-  const payload: SecretWordInsert = {
-    match_id: input.matchId,
-    player_id: input.playerId,
-    encrypted_word: input.word,
-    word_length: input.word.length,
-  };
-
-  const { error } = await supabase.from('secret_words').insert(payload);
+  const { data, error } = await supabase.rpc('submit_secret_word', {
+    p_match_id: input.matchId,
+    p_player_id: input.playerId,
+    p_secret_word: input.word,
+  });
 
   if (error) {
     throw new Error(error.message);
   }
+
+  return data?.[0] ?? null;
+}
+
+export async function restartMatch(input: {
+  roomId: string;
+  playerId: string;
+}) {
+  const { data, error } = await supabase.rpc('restart_room_match', {
+    p_room_id: input.roomId,
+    p_player_id: input.playerId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data?.[0] ?? null;
 }
 
 export async function updateRoomStatus(roomId: string, status: RoomRecord['status']) {

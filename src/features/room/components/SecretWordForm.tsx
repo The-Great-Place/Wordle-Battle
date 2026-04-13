@@ -23,8 +23,8 @@ export function SecretWordForm({
         <p className={styles.kicker}>Secret Word</p>
         <h3 className={styles.heading}>Lock in the word your opponent has to solve.</h3>
         <p className={styles.description}>
-          This now submits through Supabase-backed state, while full
-          server-authoritative validation is still the next step.
+          Words are validated against the shared dictionary and stay frozen for
+          the current round once you lock them in.
         </p>
       </div>
 
@@ -43,7 +43,10 @@ export function SecretWordForm({
       </div>
 
       <p className={styles.helpText}>
-        {error ?? (isLocked ? 'Your secret word is locked for this round.' : 'Five letters only for now.')}
+        {error
+          ?? (isLocked
+            ? 'Your secret word is locked for this round.'
+            : 'Choose a valid five-letter dictionary word.')}
       </p>
     </section>
   );

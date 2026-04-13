@@ -101,12 +101,12 @@ export function MatchPage() {
 
       <div className={styles.footerCard}>
         <div>
-          <p className={styles.footerKicker}>Live Guessing Slice</p>
+          <p className={styles.footerKicker}>Live Round</p>
           <h3 className={styles.footerHeading}>Guesses now persist in Supabase and update both boards in real time.</h3>
           <p className={styles.footerText}>
-            Guess evaluation is now meant to come from the server-side SQL RPC.
-            Timer enforcement, draw resolution, and stronger guest identity are
-            still the next backend steps.
+            Guess validation and scoring now come from the backend. When the
+            round ends, head back to the lobby to start the next round with the
+            same room and a fresh pair of secret words.
           </p>
         </div>
 

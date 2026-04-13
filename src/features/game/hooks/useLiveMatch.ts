@@ -181,7 +181,7 @@ export function useLiveMatch(roomCode: string) {
       return;
     }
 
-    setStatusMessage('Enter a valid 5-letter guess to submit it to the live match.');
+    setStatusMessage('Enter a valid five-letter dictionary word to submit your next guess.');
   }, [currentPlayerId, guesses, liveMatch, matchPlayerStates, refreshError]);
 
   const yourGuesses = guesses.filter((guess) => guess.player_id === currentPlayerId);

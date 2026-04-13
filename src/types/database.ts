@@ -293,9 +293,63 @@ export type Database = {
           },
         ];
       };
+      valid_words: {
+        Row: {
+          word: string;
+        };
+        Insert: {
+          word: string;
+        };
+        Update: {
+          word?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
+      is_valid_dictionary_word: {
+        Args: {
+          p_word: string;
+        };
+        Returns: boolean;
+      };
+      restart_room_match: {
+        Args: {
+          p_player_id: string;
+          p_room_id: string;
+        };
+        Returns: {
+          match_id: string;
+          match_status: 'awaiting_words' | 'active' | 'finished';
+          room_id: string;
+          room_status:
+            | 'waiting_for_players'
+            | 'waiting_for_words'
+            | 'ready_to_start'
+            | 'in_match'
+            | 'match_finished';
+        }[];
+      };
+      submit_secret_word: {
+        Args: {
+          p_match_id: string;
+          p_player_id: string;
+          p_secret_word: string;
+        };
+        Returns: {
+          match_id: string;
+          match_status: 'awaiting_words' | 'active' | 'finished';
+          room_id: string;
+          room_status:
+            | 'waiting_for_players'
+            | 'waiting_for_words'
+            | 'ready_to_start'
+            | 'in_match'
+            | 'match_finished';
+          word_locked: boolean;
+        }[];
+      };
       submit_match_guess: {
         Args: {
           p_guess_word: string;

@@ -28,7 +28,7 @@ export function GuessComposer({
         <input
           className={styles.input}
           type="text"
-          placeholder="Enter 5 letters"
+          placeholder="Enter a dictionary word"
           value={currentGuess}
           disabled={isDisabled}
           onChange={(event) => onChange(event.target.value)}
